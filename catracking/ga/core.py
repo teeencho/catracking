@@ -92,10 +92,17 @@ class MeasurementProtocol(OrderedDict):
     def client_id(self):
         """
         ID generated in Google Analytics for each client.
+        A middleware should handle the creation of it in case Google Analytics
+        was not loaded beforehand.
+
         Every hit should contain a client id, so it can be identified and
         included to a specific session.
+
+        A `_ga2017` cookie real example: `GA1.1.809004643.1509480820` and
+        in Measurement Protocol, we need to get rid of `GA1.1.`.
         """
-        return None
+        return '.'.join(
+            self.request.COOKIES.get('_ga2017', '').split('.')[-2:])
 
     @cached_property
     def user_id(self):
