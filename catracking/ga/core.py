@@ -3,13 +3,13 @@ import random
 from collections import OrderedDict
 from urllib import urlencode
 
-from django.conf import settings
+from django.conf import settings as django_settings
 
 import catracking.ga.parameters as parameters
 from catracking.ga.dimensions import CD25_US_GA_CLIENT_ID
 
 
-class NotConfiguredTrackerError(Exception):
+class TrackerNotConfiguredError(Exception):
     """
     Raised when the tracker has not been configured in settings.
     Each tracker should have its configuration specific in TRACKERS.
@@ -48,11 +48,17 @@ class MeasurementProtocol(OrderedDict):
 
     @property
     def settings(self):
+        """
+        Returns the Google Analytics tracker configuration.
+
+        An error will be raised if this property is ever called without
+        a configuration for the tracker.
+        """
         try:
-            return settings.TRACKERS['ga']
+            return django_settings.TRACKERS['GA']
         except AttributeError:
-            raise NotConfiguredTrackerError(
-                'Google Analytics tracker configuration does not exist.')
+            raise TrackerNotConfiguredError(
+                'GA tracker configuration does not exist.')
 
     @property
     def ga_property(self):
@@ -65,7 +71,7 @@ class MeasurementProtocol(OrderedDict):
             return self.settings['PROPERTY']
         except KeyError:
             raise MissingTrackerConfigurationError(
-                'Missing PROPERTY in `ga` tracker configuration')
+                'Missing PROPERTY in GA tracker configuration')
 
     @property
     def document_hostname(self):
@@ -79,7 +85,7 @@ class MeasurementProtocol(OrderedDict):
             return self.settings['DOCUMENT_HOSTNAME']
         except KeyError:
             raise MissingTrackerConfigurationError(
-                'Missing DOCUMENT_HOSTNAME in `ga` tracker configuration')
+                'Missing DOCUMENT_HOSTNAME in GA tracker configuration')
 
     @property
     def client_id(self):
@@ -87,6 +93,10 @@ class MeasurementProtocol(OrderedDict):
 
     @property
     def encoded_url(self):
+        """
+        Returns the full encoded url for the hit.
+        Cache buster parameter should be the last in the querystring.
+        """
         self[parameters.CACHE_BUSTER] = random.randint(1, 100000)
         return urlencode(self)
 
@@ -106,7 +116,7 @@ class EventHit(MeasurementProtocol):
                  non_interactive='1'):
         """
         Events are non interactive by default, using `non_interactive=0`
-        makes it interactive and will affect the bounce rate data
+        makes it interactive and will affect the bounce rate metric
         """
         super(EventHit, self).__init__(request)
         self[parameters.HIT_TYPE] = parameters.HIT_TYPE_EVENT
