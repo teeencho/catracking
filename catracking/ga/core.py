@@ -4,6 +4,7 @@ from collections import OrderedDict
 from urllib import urlencode
 
 from django.conf import settings as django_settings
+from django.utils.functional import cached_property
 
 import catracking.ga.parameters as parameters
 from catracking.ga.dimensions import CD25_US_GA_CLIENT_ID
@@ -35,16 +36,16 @@ class MeasurementProtocol(OrderedDict):
     def __init__(self, request):
         super(MeasurementProtocol, self).__init__()
         self.request = request
-        client_id = self.client_id
 
         self[parameters.VERSION] = 1
         self[parameters.TRACKING_ID] = self.ga_property
-        self[parameters.CLIENT_ID] = client_id
-        self[parameters.USER_ID] = None
+        self[parameters.CLIENT_ID] = self.client_id
+        if self.user_id:
+            self[parameters.USER_ID] = self.user_id
         self[parameters.USER_AGENT] = self.request.META.get(
             'HTTP_USER_AGENT', '')
         self[parameters.DOCUMENT_HOSTNAME] = self.document_hostname
-        self[CD25_US_GA_CLIENT_ID] = client_id
+        self[CD25_US_GA_CLIENT_ID] = self.client_id
 
     @property
     def settings(self):
@@ -87,9 +88,26 @@ class MeasurementProtocol(OrderedDict):
             raise MissingTrackerConfigurationError(
                 'Missing DOCUMENT_HOSTNAME in GA tracker configuration')
 
-    @property
+    @cached_property
     def client_id(self):
+        """
+        ID generated in Google Analytics for each client.
+        Every hit should contain a client id, so it can be identified and
+        included to a specific session.
+        """
         return None
+
+    @cached_property
+    def user_id(self):
+        """
+        Identifies the user in our database inside GA.
+        If there's an user attached to the request, returns its pk.
+        Non authenticated users will return either 0 or `None`.
+        """
+        try:
+            return self.request.user.pk
+        except AttributeError:
+            return 0
 
     @property
     def encoded_url(self):
