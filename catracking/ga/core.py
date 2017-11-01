@@ -26,15 +26,14 @@ def generate_ga_client_id():
 
 class GoogleAnalyticsTracker(Tracker):
     """
-    Builds the skeleton of a Measurement Protocol hit.
-
-    All information added to the hit by this class is required and
-    should be the same for all type of hits.
+    Creates a Google Analayitcs Tracker and builds the base hit information.
     """
 
     def __init__(self, request):
         super(GoogleAnalyticsTracker, self).__init__()
         self.request = request
+        self.base_hit = MeasurementProtocolHit(self)
+        self.hit_pool = []
 
     @classmethod
     def settings(cls, key):
@@ -46,6 +45,37 @@ class GoogleAnalyticsTracker(Tracker):
         except KeyError:
             raise MissingTrackerConfigurationError(
                 'Missing {} in GA tracker configuration'.format(key))
+
+    def track_hit(self, hit):
+        self.hit_pool.append(hit)
+        return self.hit_pool[-1]
+
+    def track_custom_hit(self):
+        return self.track_hit(self.base_hit.copy())
+
+    def track_event_event_hit(self, event_hit):
+        return self.track_hit(self.base_hit.copy().update(event_hit))
+
+    def send(self):
+        pass
+
+
+class MeasurementProtocolHit(OrderedDict):
+    """
+    All information added to the base hit is required and should be the same
+    for every type of hit.
+    """
+
+    def __init__(self, tracker):
+        self[parameters.VERSION] = 1
+        self[parameters.TRACKING_ID] = tracker.ga_property
+        self[parameters.CLIENT_ID] = tracker.client_id
+        if tracker.user_id:
+            self[parameters.USER_ID] = tracker.user_id
+        self[parameters.USER_AGENT] = tracker.request.META.get(
+            'HTTP_USER_AGENT', '')
+        self[parameters.DOCUMENT_HOSTNAME] = tracker.document_hostname
+        self[CD25_US_GA_CLIENT_ID] = tracker.client_id
 
     @property
     def ga_property(self):
@@ -81,8 +111,9 @@ class GoogleAnalyticsTracker(Tracker):
         A `_ga2017` cookie real example: `GA1.1.809004643.1509480820` and
         in Measurement Protocol, we need to get rid of `GA1.1.`.
         """
-        return self.request.session.get('ga_client_id', None) or '.'.join(
-            self.request.COOKIES.get('_ga2017', '').split('.')[-2:])
+        return self.tracker.request.session.get(
+            'ga_client_id', None
+        ) or '.'.join(self.request.COOKIES.get('_ga2017', '').split('.')[-2:])
 
     @cached_property
     def user_id(self):
@@ -92,7 +123,7 @@ class GoogleAnalyticsTracker(Tracker):
         Non authenticated users will return either 0 or `None`.
         """
         try:
-            return self.request.user.pk
+            return self.tracker.request.user.pk
         except AttributeError:
             return 0
 
@@ -105,25 +136,8 @@ class GoogleAnalyticsTracker(Tracker):
         self[parameters.CACHE_BUSTER] = random.randint(1, 100000)
         return urlencode(self)
 
-    def send(self):
-        pass
 
-
-class MeasurementProtocolHit(OrderedDict):
-
-    def __init__(self):
-        self[parameters.VERSION] = 1
-        self[parameters.TRACKING_ID] = self.ga_property
-        self[parameters.CLIENT_ID] = self.client_id
-        if self.user_id:
-            self[parameters.USER_ID] = self.user_id
-        self[parameters.USER_AGENT] = self.request.META.get(
-            'HTTP_USER_AGENT', '')
-        self[parameters.DOCUMENT_HOSTNAME] = self.document_hostname
-        self[CD25_US_GA_CLIENT_ID] = self.client_id
-
-
-class EventHit(MeasurementProtocolHit):
+class EventHit(OrderedDict):
     """
     Builds an event hit for Measurement Protocol.
 
@@ -131,13 +145,11 @@ class EventHit(MeasurementProtocolHit):
     additional data can be appended to the object (custom dimensions, metrics)
     """
 
-    def __init__(self, request, category, action, label, value,
-                 non_interactive='1'):
+    def __init__(self, category, action, label, value, non_interactive=0):
         """
         Events are non interactive by default, using `non_interactive=0`
-        makes it interactive and will affect the bounce rate metric
+        makes it interactive and will affect the bounce rate data
         """
-        super(EventHit, self).__init__(request)
         self[parameters.HIT_TYPE] = parameters.HIT_TYPE_EVENT
         self[parameters.EVENT_CATEGORY] = category
         self[parameters.EVENT_ACTION] = action

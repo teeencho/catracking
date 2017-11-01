@@ -1,7 +1,9 @@
 import arrow
 import logging
 
-from catracking.ca.core import generate_ga_client_id
+from catracking.ga.core import (
+    GoogleAnalyticsTracker,
+    generate_ga_client_id)
 
 logger = logging.getLogger(__name__)
 
