@@ -1,8 +1,6 @@
 import arrow
 import logging
 
-from django.conf import settings
-
 from catracking.ca.core import generate_ga_client_id
 
 logger = logging.getLogger(__name__)
@@ -39,5 +37,5 @@ class GoogleAnalyticsCookieMiddleware(object):
             response.set_cookie(
                 COOKIE_NAME,
                 request.session.pop('ga_client_id'),
-                domain=getattr(settings, 'COOKIE_DOMAIN', None),
+                domain=GoogleAnalyticsTracker.settings('COOKIE_DOMAIN'),
                 expires=arrow.utcnow().shift(years=+2).datetime)

@@ -6,25 +6,12 @@ import uuid
 from collections import OrderedDict
 from urllib import urlencode
 
-from django.conf import settings as django_settings
 from django.utils.functional import cached_property
 
+from catracking.core import (
+    Tracker,
+    MissingTrackerConfigurationError)
 from catracking.ga.dimensions import CD25_US_GA_CLIENT_ID
-
-
-class TrackerNotConfiguredError(Exception):
-    """
-    Raised when the tracker has not been configured in settings.
-    Each tracker should have its configuration specific in TRACKERS.
-    """
-    pass
-
-
-class MissingTrackerConfigurationError(Exception):
-    """
-    Raised when a required parameters is not speficied in the tracker config.
-    """
-    pass
 
 
 def generate_ga_client_id():
@@ -37,7 +24,7 @@ def generate_ga_client_id():
     return 'GA1.1.{0}'.format('.'.join([random_string, timestamp]))
 
 
-class MeasurementProtocol(OrderedDict):
+class GoogleAnalyticsTracker(Tracker):
     """
     Builds the skeleton of a Measurement Protocol hit.
 
@@ -46,32 +33,19 @@ class MeasurementProtocol(OrderedDict):
     """
 
     def __init__(self, request):
-        super(MeasurementProtocol, self).__init__()
+        super(GoogleAnalyticsTracker, self).__init__()
         self.request = request
 
-        self[parameters.VERSION] = 1
-        self[parameters.TRACKING_ID] = self.ga_property
-        self[parameters.CLIENT_ID] = self.client_id
-        if self.user_id:
-            self[parameters.USER_ID] = self.user_id
-        self[parameters.USER_AGENT] = self.request.META.get(
-            'HTTP_USER_AGENT', '')
-        self[parameters.DOCUMENT_HOSTNAME] = self.document_hostname
-        self[CD25_US_GA_CLIENT_ID] = self.client_id
-
-    @property
-    def settings(self):
+    @classmethod
+    def settings(cls, key):
         """
-        Returns the Google Analytics tracker configuration.
-
-        An error will be raised if this property is ever called without
-        a configuration for the tracker.
+        Returns the value Google Analytics tracker settings.
         """
         try:
-            return django_settings.TRACKERS['GA']
-        except AttributeError:
-            raise TrackerNotConfiguredError(
-                'GA tracker configuration does not exist.')
+            return super(GoogleAnalyticsTracker, cls).settings('GA')[key]
+        except KeyError:
+            raise MissingTrackerConfigurationError(
+                'Missing {} in GA tracker configuration'.format(key))
 
     @property
     def ga_property(self):
@@ -80,11 +54,7 @@ class MeasurementProtocol(OrderedDict):
         in our account that we are going to send the hits.
         Production and test/local environments currently have different ones.
         """
-        try:
-            return self.settings['PROPERTY']
-        except KeyError:
-            raise MissingTrackerConfigurationError(
-                'Missing PROPERTY in GA tracker configuration')
+        return GoogleAnalyticsTracker.settings('PROPERTY')
 
     @property
     def document_hostname(self):
@@ -94,11 +64,7 @@ class MeasurementProtocol(OrderedDict):
         and if we don't specify the document hostname, we can't identify
         what application sent it.
         """
-        try:
-            return self.settings['DOCUMENT_HOSTNAME']
-        except KeyError:
-            raise MissingTrackerConfigurationError(
-                'Missing DOCUMENT_HOSTNAME in GA tracker configuration')
+        return GoogleAnalyticsTracker.settings('DOCUMENT_HOSTNAME')
 
     @cached_property
     def client_id(self):
@@ -106,6 +72,8 @@ class MeasurementProtocol(OrderedDict):
         ID generated in Google Analytics for each client.
         A middleware should handle the creation of it in case Google Analytics
         was not loaded beforehand.
+        If the middleware created the value, it will be available in the
+        session as `ga_client_id`.
 
         Every hit should contain a client id, so it can be identified and
         included to a specific session.
@@ -113,7 +81,7 @@ class MeasurementProtocol(OrderedDict):
         A `_ga2017` cookie real example: `GA1.1.809004643.1509480820` and
         in Measurement Protocol, we need to get rid of `GA1.1.`.
         """
-        return '.'.join(
+        return self.request.session.get('ga_client_id', None) or '.'.join(
             self.request.COOKIES.get('_ga2017', '').split('.')[-2:])
 
     @cached_property
@@ -141,7 +109,21 @@ class MeasurementProtocol(OrderedDict):
         pass
 
 
-class EventHit(MeasurementProtocol):
+class MeasurementProtocolHit(OrderedDict):
+
+    def __init__(self):
+        self[parameters.VERSION] = 1
+        self[parameters.TRACKING_ID] = self.ga_property
+        self[parameters.CLIENT_ID] = self.client_id
+        if self.user_id:
+            self[parameters.USER_ID] = self.user_id
+        self[parameters.USER_AGENT] = self.request.META.get(
+            'HTTP_USER_AGENT', '')
+        self[parameters.DOCUMENT_HOSTNAME] = self.document_hostname
+        self[CD25_US_GA_CLIENT_ID] = self.client_id
+
+
+class EventHit(MeasurementProtocolHit):
     """
     Builds an event hit for Measurement Protocol.
 
