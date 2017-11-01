@@ -1,4 +1,7 @@
+import catracking.ga.parameters as parameters
 import random
+import time
+import uuid
 
 from collections import OrderedDict
 from urllib import urlencode
@@ -6,7 +9,6 @@ from urllib import urlencode
 from django.conf import settings as django_settings
 from django.utils.functional import cached_property
 
-import catracking.ga.parameters as parameters
 from catracking.ga.dimensions import CD25_US_GA_CLIENT_ID
 
 
@@ -23,6 +25,16 @@ class MissingTrackerConfigurationError(Exception):
     Raised when a required parameters is not speficied in the tracker config.
     """
     pass
+
+
+def generate_ga_client_id():
+    """
+    Generates a new random id to be used as client id if one is not provided
+    by Google Analytics.
+    """
+    random_string = str(uuid.uuid4().int % 2147483647)
+    timestamp = str(int(time()))
+    return 'GA1.1.{0}'.format('.'.join([random_string, timestamp]))
 
 
 class MeasurementProtocol(OrderedDict):
