@@ -1,9 +1,7 @@
 import arrow
 import logging
 
-from catracking.ga.core import (
-    GoogleAnalyticsTracker,
-    generate_ga_client_id)
+from catracking.ga.core import GoogleAnalyticsTracker
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +26,8 @@ class GoogleAnalyticsCookieMiddleware(object):
         does not exist.
         """
         if COOKIE_NAME not in request.COOKIES:
-            request.session['ga_client_id'] = generate_ga_client_id()
+            request.session['ga_client_id'] = \
+                GoogleAnalyticsTracker.generate_ga_client_id()
 
     def process_response(request, response):
         """

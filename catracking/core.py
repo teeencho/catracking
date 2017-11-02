@@ -20,10 +20,6 @@ class MissingTrackerConfigurationError(Exception):
     pass
 
 
-class Trackers:
-    GOOGLE_ANALYTICS = 1
-
-
 class Tracker(object):
     """
     Defines a tracker behavior.
@@ -32,7 +28,13 @@ class Tracker(object):
     __metaclass__ = ABCMeta
 
     @classmethod
-    def settings(cls, tracker):
+    def is_active(cls):
+        return hasattr(
+            django_settings, 'TRACKERS'
+        ) and cls.ident in django_settings.TRACKERS
+
+    @classmethod
+    def base_settings(cls):
         """
         Returns the settings object of a specific tracker.
 
@@ -40,10 +42,19 @@ class Tracker(object):
         a configuration for the tracker.
         """
         try:
-            return django_settings.TRACKERS[tracker]
+            return django_settings.TRACKERS[cls.ident]
         except (AttributeError, KeyError):
             raise TrackerNotConfiguredError(
-                'GA tracker configuration does not exist.')
+                '{} tracker configuration does not exist.'.format(cls.ident))
+
+    @classmethod
+    def settings(cls, key):
+        try:
+            return cls.base_settings()[key]
+        except KeyError:
+            raise MissingTrackerConfigurationError(
+                'Missing {0} in {1} tracker configuration'.format(
+                    key, cls.ident))
 
     @abstractmethod
     def send(self, endpoint, data):

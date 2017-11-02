@@ -8,53 +8,38 @@ from urllib import urlencode
 
 from django.utils.functional import cached_property
 
-from catracking.core import (
-    Tracker,
-    MissingTrackerConfigurationError)
+from catracking.core import Tracker
 from catracking.ga.dimensions import CD25_US_GA_CLIENT_ID
-
-
-def generate_ga_client_id():
-    """
-    Generates a new random id to be used as client id if one is not provided
-    by Google Analytics.
-    """
-    random_string = str(uuid.uuid4().int % 2147483647)
-    timestamp = str(int(time()))
-    return 'GA1.1.{0}'.format('.'.join([random_string, timestamp]))
 
 
 class GoogleAnalyticsTracker(Tracker):
     """
-    Creates a Google Analayitcs Tracker and builds the base hit information.
+    Creates a Google Analytics Tracker.
+    Handles every hit creation and re-usage of common data, for each single
+    request, the base structure of a hit should be the same.
     """
+    ident = 'ga'
 
     def __init__(self, request):
         super(GoogleAnalyticsTracker, self).__init__()
         self.request = request
-        self.base_hit = MeasurementProtocolHit(self)
-        self.hit_pool = []
+        self.pool = []
+        self._base_hit = None
 
-    @classmethod
-    def settings(cls, key):
+    @staticmethod
+    def generate_ga_client_id():
         """
-        Returns the value Google Analytics tracker settings.
+        Generates a new random id to be used as client id if one is not
+        provided by Google Analytics.
         """
-        try:
-            return super(GoogleAnalyticsTracker, cls).settings('GA')[key]
-        except KeyError:
-            raise MissingTrackerConfigurationError(
-                'Missing {} in GA tracker configuration'.format(key))
+        random_string = str(uuid.uuid4().int % 2147483647)
+        timestamp = str(int(time()))
+        return 'GA1.1.{0}'.format('.'.join([random_string, timestamp]))
 
-    def track_hit(self, hit):
-        self.hit_pool.append(hit)
-        return self.hit_pool[-1]
-
-    def track_custom_hit(self):
-        return self.track_hit(self.base_hit.copy())
-
-    def track_event_event_hit(self, event_hit):
-        return self.track_hit(self.base_hit.copy().update(event_hit))
+    def get_base_hit(self):
+        if not self._base_hit:
+            self._base_hit = MeasurementProtocolHit(self.request)
+        return self._base_hit
 
     def send(self):
         pass
@@ -66,16 +51,17 @@ class MeasurementProtocolHit(OrderedDict):
     for every type of hit.
     """
 
-    def __init__(self, tracker):
+    def __init__(self, request):
+        self.request = request
         self[parameters.VERSION] = 1
-        self[parameters.TRACKING_ID] = tracker.ga_property
-        self[parameters.CLIENT_ID] = tracker.client_id
-        if tracker.user_id:
-            self[parameters.USER_ID] = tracker.user_id
-        self[parameters.USER_AGENT] = tracker.request.META.get(
+        self[parameters.TRACKING_ID] = self.ga_property
+        self[parameters.CLIENT_ID] = self.client_id
+        if self.user_id:
+            self[parameters.USER_ID] = self.user_id
+        self[parameters.USER_AGENT] = self.request.META.get(
             'HTTP_USER_AGENT', '')
-        self[parameters.DOCUMENT_HOSTNAME] = tracker.document_hostname
-        self[CD25_US_GA_CLIENT_ID] = tracker.client_id
+        self[parameters.DOCUMENT_HOSTNAME] = self.document_hostname
+        self[CD25_US_GA_CLIENT_ID] = self.client_id
 
     @property
     def ga_property(self):
@@ -111,7 +97,7 @@ class MeasurementProtocolHit(OrderedDict):
         A `_ga2017` cookie real example: `GA1.1.809004643.1509480820` and
         in Measurement Protocol, we need to get rid of `GA1.1.`.
         """
-        return self.tracker.request.session.get(
+        return self.request.session.get(
             'ga_client_id', None
         ) or '.'.join(self.request.COOKIES.get('_ga2017', '').split('.')[-2:])
 
@@ -123,7 +109,7 @@ class MeasurementProtocolHit(OrderedDict):
         Non authenticated users will return either 0 or `None`.
         """
         try:
-            return self.tracker.request.user.pk
+            return self.request.user.pk
         except AttributeError:
             return 0
 
