@@ -26,7 +26,7 @@ Configuration example for a local environment:
 TRACKERS = {
   'ga': {
       'PROPERTY': 'UA-12322096-14',
-      'DOCUMENT_HOSTNAME': 'consumeraffairs.com'
+      'DOCUMENT_HOSTNAME': 'www.consumeraffairs.com'
   }
 }
 ```
