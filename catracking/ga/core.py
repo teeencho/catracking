@@ -52,6 +52,7 @@ class MeasurementProtocolHit(OrderedDict):
     """
 
     def __init__(self, request):
+        super(MeasurementProtocolHit, self).__init__()
         self.request = request
         self[parameters.VERSION] = 1
         self[parameters.TRACKING_ID] = self.ga_property
@@ -125,7 +126,8 @@ class MeasurementProtocolHit(OrderedDict):
 
 class EventHit(OrderedDict):
     """
-    Builds an event hit for Measurement Protocol.
+    Builds part of a hit, this should be merged to the base of the
+    Measurement Protocol hit.
 
     Adds the base information required for an `event` hit type, any
     additional data can be appended to the object (custom dimensions, metrics)
@@ -136,6 +138,7 @@ class EventHit(OrderedDict):
         Events are non interactive by default, using `non_interactive=0`
         makes it interactive and will affect the bounce rate data
         """
+        super(EventHit, self).__init__()
         self[parameters.HIT_TYPE] = parameters.HIT_TYPE_EVENT
         self[parameters.EVENT_CATEGORY] = category
         self[parameters.EVENT_ACTION] = action
