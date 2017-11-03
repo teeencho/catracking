@@ -18,7 +18,8 @@ class GoogleAnalyticsTracker(Tracker):
     Handles every hit creation and re-usage of common data, for each single
     request, the base structure of a hit should be the same.
     """
-    ident = 'ga'
+    IDENT = 'ga'
+    ENDPOINT = 'https://www.google-analytics.com/collect'
 
     def __init__(self, request):
         super(GoogleAnalyticsTracker, self).__init__()
@@ -42,6 +43,11 @@ class GoogleAnalyticsTracker(Tracker):
         return self._root_chunk
 
     def new_event(self, category, action, label, value=0, non_interactive=1):
+        """
+        Creates a new event hit and appends it to the hits pool.
+        A reference to the event hit is returned so it can be dynamically
+        populated with custom data.
+        """
         event = EventHitChunk(category, action, label, value, non_interactive)
         self.hits.append(event)
         return event
@@ -49,8 +55,23 @@ class GoogleAnalyticsTracker(Tracker):
     def new_pageview(self):
         raise NotImplementedError('Pageview event is not implemented yet')
 
+    def compile_hits(self):
+        """
+        Compiles all hits created in the tracker, generating a base hit
+        structure for each of them, with all information contained in the
+        root chunk, merged with the hit chunk itself.
+
+        This is necessary because every hit can be dinamically updated after
+        its creation, so we need to wait until the hit is fully completed
+        before merging the data.
+        """
+        self.hits = [
+            self.get_root_chunk().copy() + hit.compile() for hit in self.hits]
+
     def send(self):
-        pass
+        self.compile_hits()
+        payload_bucket = [hit.encoded_url for hit in self.hits]
+        super(GoogleAnalyticsTracker, self).send(payload_bucket)
 
 
 class BaseMeasurementProtocolHit(OrderedDict):
@@ -58,21 +79,23 @@ class BaseMeasurementProtocolHit(OrderedDict):
     Base for any hit chunk. Adds more functionality to an OrderedDict.
     """
 
-    def __init__(self):
-        super(BaseMeasurementProtocolHit, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(BaseMeasurementProtocolHit, self).__init__(*args, **kwargs)
 
-    def __add__(self, partial):
+    def __add__(self, chunk):
         """
-        Hit chunks can be merged with `c = a + b`.
+        Additions to a hit chunk are literally an update call to its
+        dictionary. Merging is possible with `c = a + b`.
         """
-        self.update(partial)
+        self.update(chunk)
         return self
 
-    def __iadd__(self, partial):
+    def __iadd__(self, chunk):
         """
-        Hit chunks can be merged with `a += b`.
+        Self additions to a hit chunk are literally an update call to its
+        dictionary. Merging is possible with `a += b`.
         """
-        self.update(partial)
+        self.update(chunk)
         return self
 
     def __setitem__(self, key, value):
@@ -82,6 +105,15 @@ class BaseMeasurementProtocolHit(OrderedDict):
         """
         if not (value is None or value == ''):
             super(BaseMeasurementProtocolHit, self).__setitem__(key, value)
+
+    def copy(self):
+        """
+        When copying a hit chunk, the only thing that matters is its data, in
+        other words, its `items()`. This function gracelly overrides the
+        `OrderedDict` copy returning a base structure hit in any subclass
+        that copy was called.
+        """
+        return BaseMeasurementProtocolHit(self.items())
 
     @property
     def encoded_url(self):
@@ -98,7 +130,7 @@ class BaseMeasurementProtocolHit(OrderedDict):
         compile something. e.g.: chunks with `HitProductsMixin` need to compile
         transaction and products.
         """
-        pass
+        return self
 
 
 class RootHitChunk(BaseMeasurementProtocolHit):
@@ -214,6 +246,7 @@ class HitProductsMixin(object):
             self += self._transaction
         for product in self._products:
             self += product
+        return self
 
 
 class PageViewHitChunk(HitProductsMixin, BaseMeasurementProtocolHit):

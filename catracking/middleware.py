@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 from django.conf import settings
+from django.utils.functional import cached_property
 
 from catracking.ga.core import GoogleAnalyticsTracker
 
@@ -15,8 +16,13 @@ class TrackingMiddleware(object):
     """
 
     TRACKERS_MAP = {
-        GoogleAnalyticsTracker.ident: GoogleAnalyticsTracker
+        GoogleAnalyticsTracker.IDENT: GoogleAnalyticsTracker
     }
+
+    @cached_property
+    def trackers(self):
+        return [tracker for tracker in getattr(
+            settings, 'TRACKERS', {}) if tracker in self.TRACKERS_MAP]
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
@@ -27,9 +33,18 @@ class TrackingMiddleware(object):
         not be added to the trackers object.
         """
         setattr(request, 'trackers', namedtuple(
-            'Trackers', ' '.join([tracker for tracker in self.TRACKERS_MAP])))
+            'Trackers', ' '.join(self.trackers)))
 
-        for tracker in getattr(settings, 'TRACKERS', {}):
-            if tracker in self.TRACKERS_MAP:
-                setattr(request.trackers, tracker,
-                        self.TRACKERS_MAP[tracker](request))
+        for tracker in self.trackers:
+            setattr(request.trackers, tracker,
+                    self.TRACKERS_MAP[tracker](request))
+
+    def process_response(self, request, response):
+        """
+        After hitting the view and before delivering the response to the
+        client, every event prepared from each tracker needs to be sent.
+        """
+        if hasattr(request, 'trackers'):
+            for tracker in request.trackers._fields:
+                getattr(request.trackers, tracker).send()
+        return response
