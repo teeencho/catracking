@@ -195,3 +195,9 @@ def some_view_hook(self):
 ```
 
 And that's it! Just let the middleware take care of the rest for you :-)
+
+## Implementing a new tracker
+
+When implementing a new tracker, please create a new directory for it, as you
+see that we have `ga`, inherit the new tracker class from the abstract `Tracker`
+existent in `catracking.core` and update this README with the docs for it.
