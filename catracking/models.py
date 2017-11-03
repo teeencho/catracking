@@ -7,3 +7,6 @@ class TrackingRequest(models.Model):
     payload = models.TextField()
     response_code = models.IntegerField()
     created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{0} - {1}'.format(self.tracker, self.response_code)

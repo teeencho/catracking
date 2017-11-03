@@ -24,8 +24,10 @@ class MissingTrackerConfigurationError(Exception):
 
 class Tracker(object):
     """
-    Defines a tracker behavior.
-
+    Defines the behaviour of a tracker.
+    The `send` function needs to be implemented in every tracker, that's
+    the last thing the middleware calls in order to send the tracking data
+    to the tracker endpoint.
     """
     __metaclass__ = ABCMeta
 
