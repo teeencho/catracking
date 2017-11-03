@@ -71,4 +71,4 @@ class Tracker(object):
         Instantiates a celery task for each payload in the bucket.
         """
         for payload in payload_bucket:
-            SendTrackingDataTask().delay(self.ENDPOINT, payload)
+            SendTrackingDataTask().delay(self.IDENT, self.ENDPOINT, payload)
