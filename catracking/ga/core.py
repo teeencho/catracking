@@ -49,35 +49,38 @@ class GoogleAnalyticsTracker(Tracker):
     def new_pageview(self):
         raise NotImplementedError('Pageview event is not implemented yet')
 
-    def compile(self):
-        pass
-
     def send(self):
         pass
 
 
 class BaseMeasurementProtocolHit(OrderedDict):
     """
-    Additional functionality for the OrderedDict, as a Base for any hit chunk.
+    Base for any hit chunk. Adds more functionality to an OrderedDict.
     """
 
     def __init__(self):
         super(BaseMeasurementProtocolHit, self).__init__()
 
     def __add__(self, partial):
+        """
+        Hit chunks can be merged with `c = a + b`.
+        """
         self.update(partial)
         return self
 
     def __iadd__(self, partial):
+        """
+        Hit chunks can be merged with `a += b`.
+        """
         self.update(partial)
         return self
 
     def __setitem__(self, key, value):
         """
         If the value being added to the dictionary is either `None` or an
-        empty string, we should not have its key.
+        empty string, the key should not exist.
         """
-        if not (value is None or value is ''):
+        if not (value is None or value == ''):
             super(BaseMeasurementProtocolHit, self).__setitem__(key, value)
 
     @property
@@ -89,11 +92,19 @@ class BaseMeasurementProtocolHit(OrderedDict):
         self[parameters.CACHE_BUSTER] = random.randint(1, 100000)
         return urlencode(self)
 
+    def compile(self):
+        """
+        Hit chunks should be compilable, but only a few of them will actually
+        compile something. e.g.: chunks with `HitProductsMixin` need to compile
+        transaction and products.
+        """
+        pass
+
 
 class RootHitChunk(BaseMeasurementProtocolHit):
     """
-    All information added to the base hit is required and should be the same
-    for every type of hit.
+    All information added to the root hit chunk is required and should be
+    the same for every type of hit.
     """
 
     def __init__(self, request):
@@ -241,7 +252,7 @@ class TransactionHitChunk(BaseMeasurementProtocolHit):
     """
 
     def __init__(self, id, affiliation=None, revenue=None):
-        super(TransactionHitChunk).__init__()
+        super(TransactionHitChunk, self).__init__()
         self[parameters.TRANSACTION_ID] = id
         if affiliation:
             self[parameters.TRANSACTION_AFFILIATION] = affiliation
