@@ -52,7 +52,7 @@ class Tracker(object):
             return django_settings.TRACKERS[cls.IDENT]
         except (AttributeError, KeyError):
             raise TrackerNotConfiguredError(
-                '{} tracker configuration does not exist.'.format(cls.IDENT))
+                '{} tracker configuration does not exist'.format(cls.IDENT))
 
     @classmethod
     def settings(cls, key):

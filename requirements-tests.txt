@@ -2,3 +2,4 @@ tox
 nose
 django-nose
 flake8
+mock==2.0
