@@ -1,2 +1,7 @@
 *.swp
 *.py[cod]
+*coverage*
+*cov*
+.python-version
+.tox
+*.egg-info
