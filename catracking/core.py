@@ -1,3 +1,5 @@
+import six
+
 from abc import (
     ABCMeta,
     abstractmethod)
@@ -22,6 +24,7 @@ class MissingTrackerConfigurationError(Exception):
     pass
 
 
+@six.add_metaclass(ABCMeta)
 class Tracker(object):
     """
     Defines the behaviour of a tracker.
@@ -29,7 +32,6 @@ class Tracker(object):
     the last thing the middleware calls in order to send the tracking data
     to the tracker endpoint.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self):
