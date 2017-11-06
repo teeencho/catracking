@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 from django.conf import settings
-from django.utils.functional import cached_property
 
 from catracking.ga.core import GoogleAnalyticsTracker
 
@@ -19,7 +18,7 @@ class TrackingMiddleware(object):
         GoogleAnalyticsTracker.IDENT: GoogleAnalyticsTracker
     }
 
-    @cached_property
+    @property
     def trackers(self):
         return [tracker for tracker in getattr(
             settings, 'TRACKERS', {}) if tracker in self.TRACKERS_MAP]
