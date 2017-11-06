@@ -1,0 +1,4 @@
+tox
+nose
+django-nose
+flake8
