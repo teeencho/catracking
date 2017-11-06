@@ -48,7 +48,7 @@ class TrackingMiddlewareTest(TestCase):
     def test_resolve_tracker_with_custom_tracker(self):
         self.assertEquals(
             CustomTracker,
-            self.middleware.resolve_tracker(CustomTracker))
+            self.middleware.resolve_tracker(GoogleAnalyticsTracker))
 
     def test_process_view(self):
         request = mock.MagicMock()

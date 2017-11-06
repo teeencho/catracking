@@ -1,7 +1,7 @@
 from collections import namedtuple
-from importlib import import_module
 
 from django.conf import settings
+from django.utils.module_loading import import_string
 
 from catracking.core import MissingTrackerConfigurationError
 from catracking.ga.core import GoogleAnalyticsTracker
@@ -31,8 +31,7 @@ class TrackingMiddleware(object):
         If there is a custom tracker, uses it instead of the base one.
         """
         try:
-            return import_module(
-                tracker_class.settings('CUSTOM_TRACKER'))
+            return import_string(tracker_class.settings('CUSTOM_TRACKER'))
         except (ImportError, MissingTrackerConfigurationError):
             return tracker_class
 
