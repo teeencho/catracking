@@ -1,7 +1,9 @@
 from collections import namedtuple
+from importlib import import_module
 
 from django.conf import settings
 
+from catracking.core import MissingTrackerConfigurationError
 from catracking.ga.core import GoogleAnalyticsTracker
 
 
@@ -23,6 +25,17 @@ class TrackingMiddleware(object):
         return [tracker for tracker in getattr(
             settings, 'TRACKERS', {}) if tracker in self.TRACKERS_MAP]
 
+    def resolve_tracker(self, tracker_class):
+        """
+        Resolves the correct tracker to be instantiated.
+        If there is a custom tracker, uses it instead of the base one.
+        """
+        try:
+            return import_module(
+                tracker_class.settings('CUSTOM_TRACKER'))
+        except (ImportError, MissingTrackerConfigurationError):
+            return tracker_class
+
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
         Creates a `trackers` object in the request and loops through the
@@ -35,8 +48,8 @@ class TrackingMiddleware(object):
             'Trackers', ' '.join(self.trackers)))
 
         for tracker in self.trackers:
-            setattr(request.trackers, tracker,
-                    self.TRACKERS_MAP[tracker](request))
+            tracker_class = self.resolve_tracker(self.TRACKERS_MAP[tracker])
+            setattr(request.trackers, tracker, tracker_class(request))
 
     def process_response(self, request, response):
         """
