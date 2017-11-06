@@ -14,10 +14,10 @@ The configuration parameters should vary according to which environment you are.
 Ident: `ga`
 
 Configuration parameters:
-* PROPERTY: Google Analytics property
-* DOCUMENT_HOSTNAME: Hostname of the application. e.g.: `consumeraffairs.com` or `matchingtool.consumeraffairs.com`
-* CUSTOM_TRACKER: Custom tracker with additional implementation. . e.g: `my.custom.tracking.CustomTracker`
-* COOKIE_DOMAIN: Domain for the `_ga2017` cookie. This only needs to be set if the application will use the `GoogleAnalyticsCookieMiddleware`.
+* **PROPERTY**: Google Analytics property
+* **DOCUMENT_HOSTNAME**: Hostname of the application. e.g.: `consumeraffairs.com` or `matchingtool.consumeraffairs.com`
+* **CUSTOM_TRACKER**: Custom tracker with additional implementation. . e.g: `my.custom.tracking.CustomTracker`
+* **COOKIE_DOMAIN**: Domain for the `_ga2017` cookie. This only needs to be set if the application will use the `GoogleAnalyticsCookieMiddleware`.
 
 Configuration example for a local environment:
 
@@ -242,6 +242,7 @@ class CustomGoogleAnalyticsTracker(GoogleAnalyticsTracker):
         prod = event.new_product(5002, 'special product name', price=9999.99)
         prod[dimensions.PS_CLICK_LEAD_VR] = 1
         prod[metrics.CM42_PS_CALL_ME_NOW_CLICKED] = 1
+        return event
 ```
 
 Then inside your `ga` tracker settings:
