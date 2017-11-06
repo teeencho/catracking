@@ -16,6 +16,7 @@ Ident: `ga`
 Configuration parameters:
 * PROPERTY: Google Analytics property
 * DOCUMENT_HOSTNAME: Hostname of the application. e.g.: `consumeraffairs.com` or `matchingtool.consumeraffairs.com`
+* CUSTOM_TRACKER: Custom tracker with additional implementation. . e.g: `my.custom.tracking.CustomTracker`
 * COOKIE_DOMAIN: Domain for the `_ga2017` cookie. This only needs to be set if the application will use the `GoogleAnalyticsCookieMiddleware`.
 
 Configuration example for a local environment:
@@ -42,6 +43,19 @@ TRACKERS = {
 ```
 
 Please note the `.` before `consumeraffairs.com` in the `COOKIE_DOMAIN`. That is necessary in order to make the cookie cross-domain.
+
+Configuration example for a local environment with a custom tracker
+
+```
+TRACKERS = {
+  'ga': {
+      'PROPERTY': 'UA-12322096-14',
+      'DOCUMENT_HOSTNAME': 'matchingtool.consumeraffairs.com',
+      'CUSTOM_TRACKER': 'gatracking.core.CustomGoogleAnalyticsTracker'
+  }
+}
+```
+
 
 ## Middlewares
 
@@ -195,6 +209,53 @@ def some_view_hook(self):
 ```
 
 And that's it! Just let the middleware take care of the rest for you :-)
+
+## Implementing a custom tracker
+
+Sometimes, an application might have different events that need to be re-usable
+in many views or states of the application.
+
+A custom tracker can be implemented, inheriting from a base one, in order
+to add those events and be able to call them directly from the tracker.
+
+The `CUSTOM_TRACKER` setting needs to be specific with the path to the
+devired class. For example:
+
+
+```
+from catracking.ga import (
+    dimensions,
+    metrics)
+from catracking.ga.core import GoogleAnalyticsTracker
+
+class CustomGoogleAnalyticsTracker(GoogleAnalyticsTracker):
+
+    def new_special_and_massive_event(self):
+        event = self.new_event(
+            'special category', 'special action', 'special label')
+        event[dimensions.CD30_HS_CUSTOM_SEARCH_RESULT] = 'special value'
+        event[dimensions.CD31_HS_ZERO_RESULTS_SEARCH] = 'massive value'
+        event.new_transaction
+        event.set_product_action('click')
+        event.new_product(5000, 'special product name', price=99.99)
+        event.new_product(5001, 'special product name', price=999.99)
+        prod = event.new_product(5002, 'special product name', price=9999.99)
+        prod[dimensions.PS_CLICK_LEAD_VR] = 1
+        prod[metrics.CM42_PS_CALL_ME_NOW_CLICKED] = 1
+```
+
+Then inside your `ga` tracker settings:
+
+```
+TRACKERS = {
+    'ga': {
+        '...': '...',
+        'CUSTOM_TRACKER': 'some.module.CustomGoogleAnalyticsTracker'
+    }
+}
+```
+
+And your custom events will be available from the tracker.
 
 ## Implementing a new tracker
 
