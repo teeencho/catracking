@@ -9,8 +9,7 @@ from django.test import (
 
 from catracking.ga import (
     core,
-    parameters,
-    dimensions)
+    parameters)
 
 
 class GoogleAnalyticsTrackerTest(TestCase):
@@ -220,3 +219,61 @@ class RootHitChunkTest(TestCase):
         self.request.user = None
         self.hit = core.RootHitChunk(self.request)
         self.assertEquals(0, self.hit.user_id)
+
+
+class HitProductsMixinTest(TestCase):
+
+    class Hit(core.HitProductsMixin, core.BaseMeasurementProtocolHit):
+        pass
+
+    def setUp(self):
+        self.hit = self.Hit()
+
+    def test_init(self):
+        self.assertIsInstance(self.hit, core.BaseMeasurementProtocolHit)
+        self.assertEquals(None, self.hit._transaction)
+        self.assertEquals([], self.hit._products)
+
+    def test_new_transaction(self):
+        transaction = self.hit.new_transaction(10, 'affiliation', 10.0)
+        self.assertEquals(transaction, self.hit._transaction)
+
+    def test_set_product_action(self):
+        self.hit.set_product_action('click')
+        self.assertEquals('click', self.hit[parameters.PRODUCT_ACTION])
+
+    def test_new_product(self):
+        product = self.hit.new_product(10, 'name', 'cat', 'brand', 10.0, 1)
+        self.assertEquals(product, self.hit._products[0])
+        self.assertEquals('pr1id', self.hit._products[0].keys()[0])
+
+    def test_new_product_second(self):
+        self.hit.new_product(10, 'name', 'cat', 'brand', 10.0, 1)
+        product = self.hit.new_product(11, 'name', 'cat', 'brand', 10.0, 1)
+        self.assertEquals(product, self.hit._products[1])
+        self.assertEquals('pr2id', self.hit._products[1].keys()[0])
+
+    def test_compile_with_transaction(self):
+        self.hit.new_transaction(10, 'affiliation', 10.0)
+        self.hit.compile()
+        self.assertIn(parameters.TRANSACTION_ID, self.hit)
+        self.assertIn(parameters.TRANSACTION_AFFILIATION, self.hit)
+        self.assertIn(parameters.TRANSACTION_REVENUE, self.hit)
+        self.assertNotIn('pr1id', self.hit)
+
+    def test_compile_with_products(self):
+        self.hit.new_transaction(10, 'affiliation', 10.0)
+        self.hit.new_product(10, 'name', 'cat', 'brand', 10.0, 1)
+        self.hit.new_product(11, 'name', 'cat', 'brand', 10.0, 1)
+        self.hit.compile()
+        self.assertIn(parameters.TRANSACTION_ID, self.hit)
+        self.assertIn(parameters.TRANSACTION_AFFILIATION, self.hit)
+        self.assertIn(parameters.TRANSACTION_REVENUE, self.hit)
+        self.assertIn('pr1id', self.hit)
+        self.assertIn('pr1nm', self.hit)
+        self.assertIn('pr1ca', self.hit)
+        self.assertIn('pr1br', self.hit)
+        self.assertIn('pr2id', self.hit)
+        self.assertIn('pr2nm', self.hit)
+        self.assertIn('pr2ca', self.hit)
+        self.assertIn('pr2br', self.hit)
