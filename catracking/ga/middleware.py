@@ -1,10 +1,6 @@
 import arrow
-import logging
 
 from catracking.ga.core import GoogleAnalyticsTracker
-
-logger = logging.getLogger(__name__)
-
 
 COOKIE_NAME = '_ga2017'
 
@@ -20,7 +16,7 @@ class GoogleAnalyticsCookieMiddleware(object):
     invalidate the cache, cause it will set a cookie in the response.
     """
 
-    def process_request(request):
+    def process_request(self, request):
         """
         Generates a client id and adds to the session in case `_ga2017` cookie
         does not exist.
@@ -29,12 +25,12 @@ class GoogleAnalyticsCookieMiddleware(object):
             request.session['ga_cookie'] = \
                 GoogleAnalyticsTracker.generate_ga_cookie()
 
-    def process_response(request, response):
+    def process_response(self, request, response):
         """
         If a session value was added by `process_request`, pops that out
         and adds it as a cookie. This cookie will be used by Google Analytics.
         """
-        if 'ga_client_id' in request.session:
+        if 'ga_cookie' in request.session:
             response.set_cookie(
                 COOKIE_NAME,
                 request.session.pop('ga_cookie'),
