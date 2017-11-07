@@ -1,5 +1,6 @@
 import mock
 
+from collections import OrderedDict
 from time import time
 
 from django.test import (
@@ -100,3 +101,68 @@ class GoogleAnalyticsTrackerTest(TestCase):
             self.tracker.send()
             p_compile_hits.assert_called_once()
             p_send.assert_called_with(['z=1', 'z=1'])
+
+
+class BaseMeasurementProtocolHitTest(TestCase):
+
+    def setUp(self):
+        self.hit = core.BaseMeasurementProtocolHit()
+
+    def test_init(self):
+        self.assertIsInstance(self.hit, OrderedDict)
+
+    def test_add(self):
+        chunk = {'a': 1}
+        self.assertEquals(OrderedDict({'a': 1}), self.hit + chunk)
+
+    def test_add_existing_key(self):
+        self.hit['a'] = 2
+        chunk = {'a': 1}
+        self.assertEquals(OrderedDict({'a': 1}), self.hit + chunk)
+
+    def test_iadd(self):
+        chunk = {'a': 1}
+        self.hit += chunk
+        self.assertEquals(OrderedDict({'a': 1}), self.hit)
+
+    def test_iadd_existing_key(self):
+        self.hit['a'] = 2
+        chunk = {'a': 1}
+        self.hit += chunk
+        self.assertEquals(OrderedDict({'a': 1}), self.hit)
+
+    def test_setitem(self):
+        self.hit['a'] = 1
+        self.assertEquals(OrderedDict({'a': 1}), self.hit)
+
+    def test_setitem_empty_string(self):
+        self.hit['a'] = ''
+        self.assertEquals(OrderedDict({}), self.hit)
+
+    def test_setitem_none(self):
+        self.hit['a'] = None
+        self.assertEquals(OrderedDict({}), self.hit)
+
+    def test_copy(self):
+        self.hit['a'] = 1
+        self.hit['b'] = 'a'
+        self.hit['d'] = ''
+        self.hit['c'] = None
+        self.assertEquals(
+            core.BaseMeasurementProtocolHit([('a', 1), ('b', 'a')]),
+            self.hit.copy())
+
+    @mock.patch('random.randint')
+    def test_encoded_url(self, p_randint):
+        p_randint.return_value = 2
+        self.hit['a'] = 1
+        self.hit['b'] = 'a'
+        self.assertEquals('a=1&b=a&z=2', self.hit.encoded_url)
+
+    @mock.patch('random.randint')
+    def test_encoded_url_no_value(self, p_randint):
+        p_randint.return_value = 2
+        self.assertEquals('z=2', self.hit.encoded_url)
+
+    def test_compile(self):
+        self.assertEquals(self.hit, self.hit.compile())
