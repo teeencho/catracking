@@ -1,5 +1,6 @@
 import mock
 
+from django.conf import settings
 from django.test import (
     TestCase,
     override_settings)
@@ -25,6 +26,11 @@ class TrackingMiddlewareTest(TestCase):
 
     def setUp(self):
         self.middleware = middleware.TrackingMiddleware()
+
+    def test_trackers_no_trackers_object(self):
+        with self.settings():
+            del settings.TRACKERS
+            self.assertEquals(self.middleware.trackers, [])
 
     @override_settings(TRACKERS={})
     def test_trackers_no_trackers(self):
@@ -61,8 +67,18 @@ class TrackingMiddlewareTest(TestCase):
     @mock.patch('catracking.middleware.GoogleAnalyticsTracker.send')
     def test_process_response(self, p_send):
         request = mock.MagicMock()
-        request.trackers = None
-
+        response = mock.MagicMock()
         self.middleware.process_view(request, None, None, None)
-        self.middleware.process_response(request, None)
+        self.assertEquals(
+            response,
+            self.middleware.process_response(request, response))
         p_send.assert_called_once()
+
+    @mock.patch('catracking.middleware.GoogleAnalyticsTracker.send')
+    def test_process_response_request_no_trackers(self, p_send):
+        request = None
+        response = mock.MagicMock()
+        self.assertEquals(
+            response,
+            self.middleware.process_response(request, response))
+        p_send.assert_not_called()
