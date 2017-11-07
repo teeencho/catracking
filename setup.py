@@ -10,6 +10,7 @@ setup(
         'django>=1.9',
         'celery>=3.1',
         'requests>=2.14',
+        'arrow>=0.10.0',
         'six'
     ],
 )
