@@ -245,13 +245,13 @@ class HitProductsMixinTest(TestCase):
     def test_new_product(self):
         product = self.hit.new_product(10, 'name', 'cat', 'brand', 10.0, 1)
         self.assertEquals(product, self.hit._products[0])
-        self.assertEquals('pr1id', self.hit._products[0].keys()[0])
+        self.assertEquals('pr1id', list(self.hit._products[0].keys())[0])
 
     def test_new_product_second(self):
         self.hit.new_product(10, 'name', 'cat', 'brand', 10.0, 1)
         product = self.hit.new_product(11, 'name', 'cat', 'brand', 10.0, 1)
         self.assertEquals(product, self.hit._products[1])
-        self.assertEquals('pr2id', self.hit._products[1].keys()[0])
+        self.assertEquals('pr2id', list(self.hit._products[1].keys())[0])
 
     def test_compile_with_transaction(self):
         self.hit.new_transaction(10, 'affiliation', 10.0)
@@ -324,9 +324,9 @@ class ProductHitChunkTest(TestCase):
 
     def test_set_item(self):
         self.hit['a'] = 1
-        self.assertEquals('pr1a', self.hit.keys()[-1])
+        self.assertEquals('pr1a', list(self.hit.keys())[-1])
 
     def test_set_item_2(self):
         self.hit = core.ProductHitChunk(2, 10)
         self.hit['a'] = 1
-        self.assertEquals('pr2a', self.hit.keys()[-1])
+        self.assertEquals('pr2a', list(self.hit.keys())[-1])
