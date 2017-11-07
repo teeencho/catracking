@@ -174,14 +174,14 @@ class RootHitChunk(BaseMeasurementProtocolHit):
         """
         return GoogleAnalyticsTracker.settings('DOCUMENT_HOSTNAME')
 
-    @cached_property
+    @property
     def client_id(self):
         """
         ID generated in Google Analytics for each client.
         A middleware should handle the creation of it in case Google Analytics
         was not loaded beforehand.
         If the middleware created the value, it will be available in the
-        session as `ga_client_id`.
+        session as `ga_cookie`.
 
         Every hit should contain a client id, so it can be identified and
         included to a specific session.
@@ -189,9 +189,10 @@ class RootHitChunk(BaseMeasurementProtocolHit):
         A `_ga2017` cookie real example: `GA1.1.809004643.1509480820` and
         in Measurement Protocol, we need to get rid of `GA1.1.`.
         """
-        return self.request.session.get(
-            'ga_client_id', None
-        ) or '.'.join(self.request.COOKIES.get('_ga2017', '').split('.')[-2:])
+        cookie_from_session = self.request.session.get('ga_cookie', '')
+        cookie_from_cookies = self.request.COOKIES.get('_ga2017', '')
+        return '.'.join(
+            (cookie_from_session or cookie_from_cookies).split('.')[-2:])
 
     @cached_property
     def user_id(self):
@@ -201,7 +202,7 @@ class RootHitChunk(BaseMeasurementProtocolHit):
         Non authenticated users will return either 0 or `None`.
         """
         try:
-            return self.request.user.pk
+            return int(self.request.user.pk)
         except AttributeError:
             return 0
 

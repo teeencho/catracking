@@ -7,7 +7,10 @@ from django.test import (
     TestCase,
     override_settings)
 
-from catracking.ga import core
+from catracking.ga import (
+    core,
+    parameters,
+    dimensions)
 
 
 class GoogleAnalyticsTrackerTest(TestCase):
@@ -166,3 +169,54 @@ class BaseMeasurementProtocolHitTest(TestCase):
 
     def test_compile(self):
         self.assertEquals(self.hit, self.hit.compile())
+
+
+@override_settings(
+    TRACKERS={'ga': {'PROPERTY': 'XXX-YY', 'DOCUMENT_HOSTNAME': 'www.ca.com'}})
+class RootHitChunkTest(TestCase):
+
+    def setUp(self):
+        self.request = mock.MagicMock()
+        self.request.session = {}
+        self.request.META = {'HTTP_USER_AGENT': 'Chrome'}
+        self.request.COOKIES = {'_ga2017': 'GA1.2.12345.12345'}
+        self.request.user.pk = 999
+        self.hit = core.RootHitChunk(self.request)
+
+    def test_init(self):
+        self.assertEquals(self.request, self.hit.request)
+        self.assertEquals(1, self.hit[parameters.VERSION])
+        self.assertEquals('XXX-YY', self.hit[parameters.TRACKING_ID])
+        self.assertEquals('12345.12345', self.hit[parameters.CLIENT_ID])
+        self.assertEquals(999, self.hit[parameters.USER_ID])
+        self.assertEquals('Chrome', self.hit[parameters.USER_AGENT])
+        self.assertEquals('www.ca.com', self.hit[parameters.DOCUMENT_HOSTNAME])
+        self.assertEquals('12345.12345', self.hit[parameters.CLIENT_ID])
+
+    def test_ga_property(self):
+        self.assertEquals('XXX-YY', self.hit.ga_property)
+
+    def test_document_hostname(self):
+        self.assertEquals('www.ca.com', self.hit.document_hostname)
+
+    def test_client_id_cookie_in_session(self):
+        self.hit.request.session = {'ga_cookie': 'GA1.2.99999.99999'}
+        self.assertEquals('99999.99999', self.hit.client_id)
+
+    def test_client_id_cookie_not_in_session_but_in_cookies(self):
+        self.hit.request.session = {}
+        self.hit.request.COOKIES = {'_ga2017': 'GA1.2.12345.12345'}
+        self.assertEquals('12345.12345', self.hit.client_id)
+
+    def test_client_id_cookie_not_in_session_and_not_in_cookies(self):
+        self.hit.request.session = {}
+        self.hit.request.COOKIES = {}
+        self.assertEquals('', self.hit.client_id)
+
+    def test_user_id(self):
+        self.assertEquals(999, self.hit.user_id)
+
+    def test_user_id_no_user(self):
+        self.request.user = None
+        self.hit = core.RootHitChunk(self.request)
+        self.assertEquals(0, self.hit.user_id)
