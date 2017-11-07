@@ -277,3 +277,18 @@ class HitProductsMixinTest(TestCase):
         self.assertIn('pr2nm', self.hit)
         self.assertIn('pr2ca', self.hit)
         self.assertIn('pr2br', self.hit)
+
+
+class EventHitChunkTest(TestCase):
+
+    def setUp(self):
+        self.hit = core.EventHitChunk('category', 'action', 'label')
+
+    def test_init(self):
+        self.assertIsInstance(self.hit, core.BaseMeasurementProtocolHit)
+        self.assertEquals('event', self.hit[parameters.HIT_TYPE])
+        self.assertEquals('category', self.hit[parameters.EVENT_CATEGORY])
+        self.assertEquals('action', self.hit[parameters.EVENT_ACTION])
+        self.assertEquals('label', self.hit[parameters.EVENT_LABEL])
+        self.assertEquals(0, self.hit[parameters.EVENT_VALUE])
+        self.assertEquals(0, self.hit[parameters.EVENT_NON_INTERACTIVE])
