@@ -1,16 +1,16 @@
 import arrow
 
-from django.test import TestCase
+from model_mommy import mommy
 
-from catracking.models import TrackingRequest
+from django.test import TestCase
 
 
 class TrackingRequestTest(TestCase):
 
     def setUp(self):
-        self.tracking_request = TrackingRequest.objects.create(
-            tracker='ga', endpoint='/endpoint', payload='?v=1',
-            response_code=200)
+        self.tracking_request = mommy.make(
+            'catracking.TrackingRequest', tracker='ga', endpoint='/endpoint',
+            payload='?v=1', response_code=200)
         self.tracking_request.created = arrow.get(2017, 1, 1).datetime
 
     def test_init(self):
