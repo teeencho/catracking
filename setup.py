@@ -1,4 +1,6 @@
-from setuptools import setup
+from setuptools import (
+    find_packages,
+    setup)
 
 setup(
     name='catracking',
@@ -6,6 +8,7 @@ setup(
     author='ConsumerAffairs',
     description='Tracking for ConsumerAffairs',
     url='https://github.com/ConsumerAffairs/catracking',
+    packages=find_packages(exclude=('tests*',)),
     install_requires=[
         'django>=1.9',
         'celery>=3.1',
