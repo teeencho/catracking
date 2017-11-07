@@ -305,3 +305,28 @@ class TransactionHitChunkTest(TestCase):
         self.assertEquals(
             'affiliation', self.hit[parameters.TRANSACTION_AFFILIATION])
         self.assertEquals(10.0, self.hit[parameters.TRANSACTION_REVENUE])
+
+
+class ProductHitChunkTest(TestCase):
+
+    def setUp(self):
+        self.hit = core.ProductHitChunk(
+            1, 10, 'name', 'category', 'brand', 10.0, 1)
+
+    def test_init(self):
+        self.assertEquals(1, self.hit.index)
+        self.assertEquals(10, self.hit['pr1id'])
+        self.assertEquals('name', self.hit['pr1nm'])
+        self.assertEquals('category', self.hit['pr1ca'])
+        self.assertEquals('brand', self.hit['pr1br'])
+        self.assertEquals(10.0, self.hit['pr1pr'])
+        self.assertEquals(1, self.hit['pr1qt'])
+
+    def test_set_item(self):
+        self.hit['a'] = 1
+        self.assertEquals('pr1a', self.hit.keys()[-1])
+
+    def test_set_item_2(self):
+        self.hit = core.ProductHitChunk(2, 10)
+        self.hit['a'] = 1
+        self.assertEquals('pr2a', self.hit.keys()[-1])
