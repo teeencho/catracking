@@ -292,3 +292,16 @@ class EventHitChunkTest(TestCase):
         self.assertEquals('label', self.hit[parameters.EVENT_LABEL])
         self.assertEquals(0, self.hit[parameters.EVENT_VALUE])
         self.assertEquals(0, self.hit[parameters.EVENT_NON_INTERACTIVE])
+
+
+class TransactionHitChunkTest(TestCase):
+
+    def setUp(self):
+        self.hit = core.TransactionHitChunk(1, 'affiliation', 10.0)
+
+    def test_init(self):
+        self.assertIsInstance(self.hit, core.BaseMeasurementProtocolHit)
+        self.assertEquals(1, self.hit[parameters.TRANSACTION_ID])
+        self.assertEquals(
+            'affiliation', self.hit[parameters.TRANSACTION_AFFILIATION])
+        self.assertEquals(10.0, self.hit[parameters.TRANSACTION_REVENUE])

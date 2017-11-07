@@ -291,10 +291,8 @@ class TransactionHitChunk(BaseMeasurementProtocolHit):
     def __init__(self, id, affiliation=None, revenue=None):
         super(TransactionHitChunk, self).__init__()
         self[parameters.TRANSACTION_ID] = id
-        if affiliation:
-            self[parameters.TRANSACTION_AFFILIATION] = affiliation
-        if revenue:
-            self[parameters.TRANSACTION_REVENUE] = revenue
+        self[parameters.TRANSACTION_AFFILIATION] = affiliation
+        self[parameters.TRANSACTION_REVENUE] = revenue
 
 
 class ProductHitChunk(BaseMeasurementProtocolHit):
