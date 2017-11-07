@@ -9,7 +9,8 @@ from django.test import (
 
 from catracking.ga import (
     core,
-    parameters)
+    parameters,
+    metrics)
 
 
 class GoogleAnalyticsTrackerTest(TestCase):
@@ -252,6 +253,12 @@ class HitProductsMixinTest(TestCase):
         product = self.hit.new_product(11, 'name', 'cat', 'brand', 10.0, 1)
         self.assertEquals(product, self.hit._products[1])
         self.assertEquals('pr2id', list(self.hit._products[1].keys())[0])
+
+    def test_compile_without_transaction(self):
+        self.hit.compile()
+        self.hit[metrics.CM12_HS_SECONDS_ENGAGED] = 1
+        self.assertNotIn(parameters.TRANSACTION_ID, self.hit)
+        self.assertIn(metrics.CM12_HS_SECONDS_ENGAGED, self.hit)
 
     def test_compile_with_transaction(self):
         self.hit.new_transaction(10, 'affiliation', 10.0)
