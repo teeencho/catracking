@@ -1,10 +1,10 @@
 import catracking.ga.parameters as parameters
 import random
-import time
 import uuid
 
 from collections import OrderedDict
 from six.moves.urllib.parse import urlencode
+from time import time
 
 from django.utils.functional import cached_property
 
@@ -28,14 +28,17 @@ class GoogleAnalyticsTracker(Tracker):
         self._root_chunk = None
 
     @staticmethod
-    def generate_ga_client_id():
+    def generate_ga_cookie():
         """
         Generates a new random id to be used as client id if one is not
         provided by Google Analytics.
         """
         random_string = str(uuid.uuid4().int % 2147483647)
         timestamp = str(int(time()))
-        return 'GA1.1.{0}'.format('.'.join([random_string, timestamp]))
+        hostname = GoogleAnalyticsTracker.settings('DOCUMENT_HOSTNAME')
+        sections = len(hostname.replace('www.', '').split('.'))
+        return 'GA1.{0}.{1}'.format(
+            sections, '.'.join([random_string, timestamp]))
 
     def get_root_chunk(self):
         if not self._root_chunk:

@@ -26,8 +26,8 @@ class GoogleAnalyticsCookieMiddleware(object):
         does not exist.
         """
         if COOKIE_NAME not in request.COOKIES:
-            request.session['ga_client_id'] = \
-                GoogleAnalyticsTracker.generate_ga_client_id()
+            request.session['ga_cookie'] = \
+                GoogleAnalyticsTracker.generate_ga_cookie()
 
     def process_response(request, response):
         """
@@ -37,6 +37,6 @@ class GoogleAnalyticsCookieMiddleware(object):
         if 'ga_client_id' in request.session:
             response.set_cookie(
                 COOKIE_NAME,
-                request.session.pop('ga_client_id'),
+                request.session.pop('ga_cookie'),
                 domain=GoogleAnalyticsTracker.settings('COOKIE_DOMAIN'),
                 expires=arrow.utcnow().shift(years=+2).datetime)
