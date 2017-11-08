@@ -203,7 +203,7 @@ class RootHitChunk(BaseMeasurementProtocolHit):
         """
         try:
             return int(self.request.user.pk)
-        except AttributeError:
+        except (AttributeError, TypeError):
             return 0
 
 
