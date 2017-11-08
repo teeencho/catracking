@@ -10,7 +10,8 @@ from django.test import (
 from catracking.ga import (
     core,
     parameters,
-    metrics)
+    metrics,
+    events)
 
 
 class GoogleAnalyticsTrackerTest(TestCase):
@@ -77,7 +78,10 @@ class GoogleAnalyticsTrackerTest(TestCase):
         self.assertEquals(1, root_chunk)
 
     def test_new_event(self):
-        event = self.tracker.new_event('category', 'action', 'label')
+        event = self.tracker.new_event(
+            events.EVENT_CATEGORY_VERIFIED_LEAD,
+            'frontpoint',
+            events.EVENT_LABEL_CLICK)
         self.assertIn(event, self.tracker.hits)
         self.assertIsInstance(event, core.EventHitChunk)
 
