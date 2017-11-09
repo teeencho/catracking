@@ -89,15 +89,11 @@ class GoogleAnalyticsTrackerTest(TestCase):
         with self.assertRaises(NotImplementedError):
             self.tracker.new_pageview()
 
-    @mock.patch('catracking.ga.core.BaseMeasurementProtocolHit.copy')
-    @mock.patch('catracking.ga.core.BaseMeasurementProtocolHit.compile')
-    def test_compile_hits(self, p_compile, p_copy):
-        p_copy.return_value = core.BaseMeasurementProtocolHit()
-        p_compile.return_value = core.BaseMeasurementProtocolHit()
+    def test_compile_hits(self):
         self.tracker._root_chunk = core.BaseMeasurementProtocolHit({1: 2})
-        self.tracker.hits = [core.BaseMeasurementProtocolHit()] * 2
+        self.tracker.hits = [core.BaseMeasurementProtocolHit({2: 3})] * 2
         self.tracker.compile_hits()
-        self.assertEquals([{}, {}], self.tracker.hits)
+        self.assertEquals([{1: 2, 2: 3}, {1: 2, 2: 3}], self.tracker.hits)
 
     @mock.patch('catracking.core.Tracker.send')
     @mock.patch('random.randint')
@@ -117,26 +113,6 @@ class BaseMeasurementProtocolHitTest(TestCase):
 
     def test_init(self):
         self.assertIsInstance(self.hit, OrderedDict)
-
-    def test_add(self):
-        chunk = {'a': 1}
-        self.assertEquals(OrderedDict({'a': 1}), self.hit + chunk)
-
-    def test_add_existing_key(self):
-        self.hit['a'] = 2
-        chunk = {'a': 1}
-        self.assertEquals(OrderedDict({'a': 1}), self.hit + chunk)
-
-    def test_iadd(self):
-        chunk = {'a': 1}
-        self.hit += chunk
-        self.assertEquals(OrderedDict({'a': 1}), self.hit)
-
-    def test_iadd_existing_key(self):
-        self.hit['a'] = 2
-        chunk = {'a': 1}
-        self.hit += chunk
-        self.assertEquals(OrderedDict({'a': 1}), self.hit)
 
     def test_setitem(self):
         self.hit['a'] = 1

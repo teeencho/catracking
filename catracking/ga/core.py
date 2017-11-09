@@ -68,8 +68,12 @@ class GoogleAnalyticsTracker(Tracker):
         its creation, so we need to wait until the hit is fully completed
         before merging the data.
         """
-        self.hits = [
-            self.get_root_chunk().copy() + hit.compile() for hit in self.hits]
+        compiled_hits = []
+        for hit in self.hits:
+            root_copy = self.get_root_chunk().copy()
+            root_copy.update(hit.compile())
+            compiled_hits.append(root_copy)
+        self.hits = compiled_hits
 
     def send(self):
         self.compile_hits()
@@ -84,22 +88,6 @@ class BaseMeasurementProtocolHit(OrderedDict):
 
     def __init__(self, *args, **kwargs):
         super(BaseMeasurementProtocolHit, self).__init__(*args, **kwargs)
-
-    def __add__(self, chunk):
-        """
-        Additions to a hit chunk are literally an update call to its
-        dictionary. Merging is possible with `c = a + b`.
-        """
-        self.update(chunk)
-        return self
-
-    def __iadd__(self, chunk):
-        """
-        Self additions to a hit chunk are literally an update call to its
-        dictionary. Merging is possible with `a += b`.
-        """
-        self.update(chunk)
-        return self
 
     def __setitem__(self, key, value):
         """
@@ -247,9 +235,9 @@ class HitProductsMixin(object):
         new products should not be added after this.
         """
         if self._transaction:
-            self += self._transaction
+            self.update(self._transaction)
         for product in self._products:
-            self += product
+            self.update(product)
         return self
 
 
