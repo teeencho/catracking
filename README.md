@@ -263,3 +263,13 @@ And your custom events will be available from the tracker.
 When implementing a new tracker, please create a new directory for it, as you
 see that we have `ga`, inherit the new tracker class from the abstract `Tracker`
 existent in `catracking.core` and update this README with the docs for it.
+
+## Distelli
+
+With docker installed, distelli scripts can be tested locally by executing:
+
+```
+$ ./distelli/tests.sh
+```
+
+Any environment variables containing credentials (e.g. CODECOV_TOKEN) may need to be set manually.
