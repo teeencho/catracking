@@ -1,0 +1,5 @@
+rtimoshenko/catracking:
+
+  Build:
+    - CMD="./distelli/build.sh"
+    - echo $CMD && eval $CMD
