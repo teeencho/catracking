@@ -3,4 +3,5 @@ django-nose
 mock==2.0
 model_mommy
 coverage
+codecov
 flake8
