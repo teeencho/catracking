@@ -1,0 +1,9 @@
+rtimoshenko/catracking:
+
+  Build:
+    - CMD="./distelli/build.sh"
+    - echo $CMD && eval $CMD
+
+  PreRelease:
+    - CMD="./distelli/prerelease.sh"
+    - echo $CMD && eval $CMD
