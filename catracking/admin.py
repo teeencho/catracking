@@ -1,3 +1,5 @@
+import arrow
+
 from six.moves.urllib.parse import parse_qsl
 
 from django.contrib import admin
@@ -9,6 +11,11 @@ class TrackingRequestAdmin(admin.ModelAdmin):
     list_display = (
         'tracker', 'payloadify', 'endpoint', 'response_code', 'created')
     show_full_result_count = False
+
+    def get_queryset(self, request):
+        qs = super(TrackingRequestAdmin, self).get_queryset(request)
+        five_hours_ago = arrow.utcnow().shift(hours=-5)
+        return qs.filter(created__gte=five_hours_ago.datetime)
 
     def payloadify(self, obj):
         """
