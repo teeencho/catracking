@@ -4,6 +4,7 @@ ENV APP_FOLDER=/tmp/app
 
 RUN apt-get update && apt-get install -qy \
     curl \
+    git \
     python2.7 \
     python3.5 && \
     curl -s https://bootstrap.pypa.io/get-pip.py > /tmp/get-pip.py && \
