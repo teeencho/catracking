@@ -43,12 +43,11 @@ class TrackingMiddleware(object):
         Available trackers from the package but not yet configured should
         not be added to the trackers object.
         """
-        setattr(request, 'trackers', namedtuple(
-            'Trackers', ' '.join(self.trackers)))
-
-        for tracker in self.trackers:
-            tracker_class = self.resolve_tracker(self.TRACKERS_MAP[tracker])
-            setattr(request.trackers, tracker, tracker_class(request))
+        Trackers = namedtuple('Trackers', ' '.join(self.trackers))
+        instances = {
+            tracker: self.resolve_tracker(self.TRACKERS_MAP[tracker])(request)
+            for tracker in self.trackers}
+        setattr(request, 'trackers', Trackers(**instances))
 
     def process_response(self, request, response):
         """
