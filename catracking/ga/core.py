@@ -95,7 +95,11 @@ class BaseMeasurementProtocolHit(OrderedDict):
         empty string, the key should not exist.
         """
         if not (value is None or value == ''):
-            super(BaseMeasurementProtocolHit, self).__setitem__(key, value)
+            value = str(value)
+            if key not in [parameters.TRACKING_ID, parameters.USER_AGENT]:
+                value = value.lower()
+            super(BaseMeasurementProtocolHit, self).__setitem__(
+                key, value)
 
     def copy(self):
         """

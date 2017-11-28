@@ -93,7 +93,8 @@ class GoogleAnalyticsTrackerTest(TestCase):
         self.tracker._root_chunk = core.BaseMeasurementProtocolHit({1: 2})
         self.tracker.hits = [core.BaseMeasurementProtocolHit({2: 3})] * 2
         self.tracker.compile_hits()
-        self.assertEquals([{1: 2, 2: 3}, {1: 2, 2: 3}], self.tracker.hits)
+        self.assertEquals(
+            [{1: '2', 2: '3'}, {1: '2', 2: '3'}], self.tracker.hits)
 
     @mock.patch('catracking.core.Tracker.send')
     @mock.patch('random.randint')
@@ -116,7 +117,7 @@ class BaseMeasurementProtocolHitTest(TestCase):
 
     def test_setitem(self):
         self.hit['a'] = 1
-        self.assertEquals(OrderedDict({'a': 1}), self.hit)
+        self.assertEquals(OrderedDict({'a': '1'}), self.hit)
 
     def test_setitem_empty_string(self):
         self.hit['a'] = ''
@@ -126,13 +127,24 @@ class BaseMeasurementProtocolHitTest(TestCase):
         self.hit['a'] = None
         self.assertEquals(OrderedDict({}), self.hit)
 
+    def test_setitem_uppercase(self):
+        self.hit['a'] = 'AAAA'
+        self.assertEquals(OrderedDict({'a': 'aaaa'}), self.hit)
+
+    def test_setitem_unchangeable_keys(self):
+        self.hit[parameters.TRACKING_ID] = 'AaAa'
+        self.hit[parameters.USER_AGENT] = 'AaAa'
+        self.assertEquals(OrderedDict((
+            (parameters.TRACKING_ID, 'AaAa'),
+            (parameters.USER_AGENT, 'AaAa'))), self.hit)
+
     def test_copy(self):
         self.hit['a'] = 1
         self.hit['b'] = 'a'
         self.hit['d'] = ''
         self.hit['c'] = None
         self.assertEquals(
-            core.BaseMeasurementProtocolHit([('a', 1), ('b', 'a')]),
+            core.BaseMeasurementProtocolHit([('a', '1'), ('b', 'a')]),
             self.hit.copy())
 
     @mock.patch('random.randint')
@@ -165,13 +177,12 @@ class RootHitChunkTest(TestCase):
 
     def test_init(self):
         self.assertEquals(self.request, self.hit.request)
-        self.assertEquals(1, self.hit[parameters.VERSION])
+        self.assertEquals('1', self.hit[parameters.VERSION])
         self.assertEquals('XXX-YY', self.hit[parameters.TRACKING_ID])
         self.assertEquals('12345.12345', self.hit[parameters.CLIENT_ID])
-        self.assertEquals(999, self.hit[parameters.USER_ID])
+        self.assertEquals('999', self.hit[parameters.USER_ID])
         self.assertEquals('Chrome', self.hit[parameters.USER_AGENT])
         self.assertEquals('www.ca.com', self.hit[parameters.DOCUMENT_HOSTNAME])
-        self.assertEquals('12345.12345', self.hit[parameters.CLIENT_ID])
 
     def test_ga_property(self):
         self.assertEquals('XXX-YY', self.hit.ga_property)
@@ -277,8 +288,8 @@ class EventHitChunkTest(TestCase):
         self.assertEquals('category', self.hit[parameters.EVENT_CATEGORY])
         self.assertEquals('action', self.hit[parameters.EVENT_ACTION])
         self.assertEquals('label', self.hit[parameters.EVENT_LABEL])
-        self.assertEquals(0, self.hit[parameters.EVENT_VALUE])
-        self.assertEquals(0, self.hit[parameters.EVENT_NON_INTERACTIVE])
+        self.assertEquals('0', self.hit[parameters.EVENT_VALUE])
+        self.assertEquals('0', self.hit[parameters.EVENT_NON_INTERACTIVE])
 
 
 class TransactionHitChunkTest(TestCase):
@@ -288,10 +299,10 @@ class TransactionHitChunkTest(TestCase):
 
     def test_init(self):
         self.assertIsInstance(self.hit, core.BaseMeasurementProtocolHit)
-        self.assertEquals(1, self.hit[parameters.TRANSACTION_ID])
+        self.assertEquals('1', self.hit[parameters.TRANSACTION_ID])
         self.assertEquals(
             'affiliation', self.hit[parameters.TRANSACTION_AFFILIATION])
-        self.assertEquals(10.0, self.hit[parameters.TRANSACTION_REVENUE])
+        self.assertEquals('10.0', self.hit[parameters.TRANSACTION_REVENUE])
 
 
 class ProductHitChunkTest(TestCase):
@@ -302,12 +313,12 @@ class ProductHitChunkTest(TestCase):
 
     def test_init(self):
         self.assertEquals(1, self.hit.index)
-        self.assertEquals(10, self.hit['pr1id'])
+        self.assertEquals('10', self.hit['pr1id'])
         self.assertEquals('name', self.hit['pr1nm'])
         self.assertEquals('category', self.hit['pr1ca'])
         self.assertEquals('brand', self.hit['pr1br'])
-        self.assertEquals(10.0, self.hit['pr1pr'])
-        self.assertEquals(1, self.hit['pr1qt'])
+        self.assertEquals('10.0', self.hit['pr1pr'])
+        self.assertEquals('1', self.hit['pr1qt'])
 
     def test_set_item(self):
         self.hit['a'] = 1

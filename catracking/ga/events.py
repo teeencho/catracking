@@ -6,6 +6,20 @@ the event is triggered.
 """
 
 """
+Category for all events related to a brand interaction
+"""
+
+EVENT_CATEGORY_BRAND_INTERACTION = 'brand interaction'
+
+"""
+`submit lead` event
+
+Label is dynamic according to the brand name.
+"""
+
+EVENT_ACTION_SUBMIT_LEAD = 'submit lead'
+
+"""
 Category for all events related to a verified lead.
 The event action is dynamic (campaign name)
 
