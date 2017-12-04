@@ -55,6 +55,7 @@ Used values:
 
 """
 EVENT_ACTION_LOGIN = 'sign-in account'
+EVENT_ACTION_SOCIAL_LOGIN = 'sign-in social account'
 
 
 """
@@ -70,6 +71,7 @@ Used values:
 
 """
 EVENT_ACTION_REGISTRATION = 'create account'
+EVENT_ACTION_SOCIAL_REGISTRATION = 'create social account'
 
 
 """
