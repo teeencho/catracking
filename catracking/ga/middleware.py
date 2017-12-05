@@ -1,11 +1,12 @@
 import arrow
 
 from catracking.ga.core import GoogleAnalyticsTracker
+from catracking.mixins import MiddlewareMixin
 
 COOKIE_NAME = '_ga2017'
 
 
-class GoogleAnalyticsCookieMiddleware(object):
+class GoogleAnalyticsCookieMiddleware(MiddlewareMixin):
     """
     Generates the `_ga2017` cookie in case it does not exist yet.
 

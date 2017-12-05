@@ -6,6 +6,7 @@ from django.test import (
     override_settings)
 
 from catracking.ga.middleware import GoogleAnalyticsCookieMiddleware
+from catracking.mixins import MiddlewareMixin
 
 
 class GoogleAnalyticsCookieMiddlewareTest(TestCase):
@@ -15,6 +16,9 @@ class GoogleAnalyticsCookieMiddlewareTest(TestCase):
         self.request = mock.MagicMock()
         self.request.COOKIES = {}
         self.request.session = {}
+
+    def test_attrs(self):
+        self.assertIsInstance(self.middleware, MiddlewareMixin)
 
     @mock.patch(
         'catracking.ga.core.GoogleAnalyticsTracker.generate_ga_cookie')

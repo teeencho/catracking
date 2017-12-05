@@ -5,9 +5,10 @@ from django.utils.module_loading import import_string
 
 from catracking.core import MissingTrackerConfigurationError
 from catracking.ga.core import GoogleAnalyticsTracker
+from catracking.mixins import MiddlewareMixin
 
 
-class TrackingMiddleware(object):
+class TrackingMiddleware(MiddlewareMixin):
     """
     Any request that resolves to a view  should have the trackers available
     for usage. So they are accessible from `request.trackers`.
