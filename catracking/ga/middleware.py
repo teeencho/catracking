@@ -37,3 +37,4 @@ class GoogleAnalyticsCookieMiddleware(MiddlewareMixin):
                 request.session.pop('ga_cookie'),
                 domain=GoogleAnalyticsTracker.settings('COOKIE_DOMAIN'),
                 expires=arrow.utcnow().shift(years=+2).datetime)
+        return response
