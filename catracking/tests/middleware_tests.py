@@ -7,6 +7,7 @@ from django.test import (
 
 from catracking import middleware
 from catracking.ga.core import GoogleAnalyticsTracker
+from catracking.mixins import MiddlewareMixin
 
 
 class CustomTracker(GoogleAnalyticsTracker):
@@ -26,6 +27,9 @@ class TrackingMiddlewareTest(TestCase):
 
     def setUp(self):
         self.middleware = middleware.TrackingMiddleware()
+
+    def test_attrs(self):
+        self.assertIsInstance(self.middleware, MiddlewareMixin)
 
     def test_trackers_no_trackers_object(self):
         with self.settings():
