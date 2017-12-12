@@ -4,7 +4,7 @@ from setuptools import (
 
 setup(
     name='catracking',
-    version='0.1.5',
+    version='0.1.6',
     author='ConsumerAffairs',
     description='Tracking for ConsumerAffairs',
     url='https://github.com/ConsumerAffairs/catracking',

@@ -140,3 +140,16 @@ The label for this event is the page the pdf was downloaded from.
 """
 
 EVENT_CATEGORY_PDF_DOWNLAOD = 'pdf download'
+
+
+"""
+Category for all events related to careers.
+"""
+EVENT_CATEGORY_CAREERS = 'careers'
+
+"""
+Application submission action.
+
+Label can be either `success` or `fail`
+"""
+EVENT_ACTION_SUBMIT_APPLICATION = 'submit application'
