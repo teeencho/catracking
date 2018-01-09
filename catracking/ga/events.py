@@ -153,3 +153,11 @@ Application submission action.
 Label can be either `success` or `fail`
 """
 EVENT_ACTION_SUBMIT_APPLICATION = 'submit application'
+
+"""
+Category for all events related to matching tool
+"""
+
+EVENT_CATEGORY_MATCHING_TOOL = 'matching tool'
+
+EVENT_ACTION_BRAND_CALL_ME_NOW = 'brand call me now'
